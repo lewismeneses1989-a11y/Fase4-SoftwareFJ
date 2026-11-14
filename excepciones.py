@@ -36,6 +36,21 @@ class CalculoInconsistenteError(SoftwareFJError):
     """Un cálculo de costos da un resultado imposible (ej.: costo negativo)."""
 
 
+# Función de apoyo: convierte un dato a número usando encadenamiento.
+def convertir_a_numero(valor, campo):
+    """Convierte valor a float o lanza DatoInvalidoError encadenada."""
+    try:
+        numero = float(valor)
+    except (TypeError, ValueError) as error:
+        # "from error" guarda el error original de Python como la causa.
+        raise DatoInvalidoError(
+            f"El campo '{campo}' debe ser numérico; se recibió {valor!r}"
+        ) from error
+    else:
+        # Solo llega aquí si la conversión funcionó.
+        return numero
+
+
 # Prueba rápida: solo se ejecuta si corremos este archivo directamente.
 if __name__ == "__main__":
     try:
@@ -43,3 +58,12 @@ if __name__ == "__main__":
     except SoftwareFJError as error:
         print("Se atrapó el error:", type(error).__name__, "-", error)
     print("El programa sigue funcionando.")
+
+    print("Conversión correcta:", convertir_a_numero("3.5", "duración"))
+
+    try:
+        convertir_a_numero("dos horas", "duración")
+    except DatoInvalidoError as error:
+        print("Error:", error)
+        print("Causa original:", type(error.__cause__).__name__,
+              "-", error.__cause__)
