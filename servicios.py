@@ -6,7 +6,8 @@ Autor: Luis Alfredo Adrada Meneses
 from abc import ABC, abstractmethod
 
 from excepciones import (CalculoInconsistenteError, DatoInvalidoError,
-                         ParametroFaltanteError, convertir_a_numero)
+                         ParametroFaltanteError, ServicioNoDisponibleError,
+                         convertir_a_numero)
 
 IVA = 0.19  # Impuesto que se suma cuando el cliente lo pide
 
@@ -16,11 +17,13 @@ class Servicio(ABC):
 
     def __init__(self, nombre, tarifa_hora, disponible=True):
         if not nombre:
-            raise ParametroFaltanteError("El servicio necesita un nombre")
+            raise ParametroFaltanteError(
+                "El servicio necesita un nombre")
         self.nombre = nombre
         self.tarifa_hora = convertir_a_numero(tarifa_hora, "tarifa por hora")
         if self.tarifa_hora <= 0:
-            raise DatoInvalidoError("La tarifa por hora debe ser mayor a 0")
+            raise DatoInvalidoError(
+                "La tarifa por hora debe ser mayor a 0")
         self.disponible = disponible
 
     @abstractmethod
@@ -39,7 +42,8 @@ class Servicio(ABC):
         """Resta el descuento (%), suma el IVA y revisa el total."""
         descuento = convertir_a_numero(descuento, "descuento")
         if not 0 <= descuento <= 100:
-            raise DatoInvalidoError("El descuento debe estar entre 0 y 100")
+            raise DatoInvalidoError(
+                "El descuento debe estar entre 0 y 100")
         total = subtotal * (1 - descuento / 100)
         if con_iva:
             total = total * (1 + IVA)
@@ -62,10 +66,66 @@ class ReservaSala(Servicio):
     def validar_parametros(self, horas):
         horas = convertir_a_numero(horas, "horas")
         if not 1 <= horas <= 12:
-            raise DatoInvalidoError("Una sala se reserva entre 1 y 12 horas")
+            raise DatoInvalidoError(
+                "Una sala se reserva entre 1 y 12 horas")
         return horas
 
     def calcular_costo(self, horas, con_iva=False, descuento=0):
+        horas = self.validar_parametros(horas)
+        subtotal = self.tarifa_hora * horas
+        return self.aplicar_ajustes(subtotal, con_iva, descuento)
+
+
+class AlquilerEquipo(Servicio):
+    """Servicio de alquiler de equipos por horas."""
+
+    def __init__(self, nombre, tarifa_hora, cantidad, disponible=True):
+        super().__init__(nombre, tarifa_hora, disponible)
+        self.cantidad = int(convertir_a_numero(cantidad, "cantidad"))
+        if self.cantidad < 1:
+            raise DatoInvalidoError(
+                "La cantidad de equipos no puede ser menor a 1")
+
+    def describir(self):
+        return f"Equipo '{self.nombre}' x {self.cantidad} unidades"
+
+    def validar_parametros(self, horas):
+        horas = convertir_a_numero(horas, "horas")
+        if not 1 <= horas <= 72:
+            raise DatoInvalidoError(
+                "El alquiler es de mínimo 1 y máximo 72 horas")
+        return horas
+
+    def calcular_costo(self, horas, con_iva=False, descuento=0):
+        horas = self.validar_parametros(horas)
+        subtotal = self.tarifa_hora * horas * self.cantidad
+        return self.aplicar_ajustes(subtotal, con_iva, descuento)
+
+
+class Asesoria(Servicio):
+    """Servicio de asesoría especializada por horas."""
+
+    def __init__(self, nombre, tarifa_hora, especialista, disponible=True):
+        super().__init__(nombre, tarifa_hora, disponible)
+        if not especialista:
+            raise ParametroFaltanteError(
+                "La asesoría requiere un especialista")
+        self.especialista = especialista
+
+    def describir(self):
+        return f"Asesoría '{self.nombre}' con {self.especialista}"
+
+    def validar_parametros(self, horas):
+        horas = convertir_a_numero(horas, "horas")
+        if not 1 <= horas <= 8:
+            raise DatoInvalidoError(
+                "La asesoría debe ser entre 1 y 8 horas")
+        return horas
+
+    def calcular_costo(self, horas, con_iva=False, descuento=0):
+        if not self.disponible:
+            raise ServicioNoDisponibleError(
+                "El especialista no está disponible")
         horas = self.validar_parametros(horas)
         subtotal = self.tarifa_hora * horas
         return self.aplicar_ajustes(subtotal, con_iva, descuento)
@@ -95,4 +155,21 @@ if __name__ == "__main__":
     try:
         sala.calcular_costo(20)
     except DatoInvalidoError as error:
+        print(f"Error: {error}")
+
+    # 5. Alquiler de equipos: tarifa x horas x cantidad
+    equipo = AlquilerEquipo("Portátil", 5000, 3)
+    print(equipo.describir())
+    print(f"Costo 10 horas: {equipo.calcular_costo(10)}")
+
+    # 6. Asesoría especializada
+    asesoria = Asesoria("Ciberseguridad", 150000, "Ana Pérez")
+    print(asesoria.describir())
+    print(f"Costo 4 horas: {asesoria.calcular_costo(4)}")
+
+    # 7. Se fuerza un error: el especialista no está disponible
+    try:
+        no_disponible = Asesoria("Redes", 70000, "Juan", disponible=False)
+        no_disponible.calcular_costo(1)
+    except ServicioNoDisponibleError as error:
         print(f"Error: {error}")
