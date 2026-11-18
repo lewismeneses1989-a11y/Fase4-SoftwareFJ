@@ -2,16 +2,23 @@
 excepciones.py
 Parte 1 - Excepciones personalizadas del sistema Software FJ.
 Autor: Luis Alfredo Adrada Meneses
+
+Define la jerarquía de excepciones propias del sistema y una función
+de apoyo que aplica el encadenamiento de excepciones (raise ... from).
 """
 
 
-# Clase base: la "mamá" de todas las excepciones del sistema.
-# Hereda de Exception, como recomienda el tutorial de Python (apartado 8.6).
+# Clase base de la jerarquía: todas las excepciones del sistema heredan
+# de ella. Hereda de Exception, como recomienda el tutorial de Python
+# (apartado 8.6). Así, un solo "except SoftwareFJError" atrapa
+# cualquier error propio del sistema.
 class SoftwareFJError(Exception):
     """Error general del sistema Software FJ."""
 
 
-# Cada hija representa un tipo de error que menciona el Anexo 3.
+# Cada clase hija representa un tipo de error que menciona el Anexo 3.
+# No necesitan código extra: heredan todo de SoftwareFJError y solo
+# cambian el nombre, que es lo que permite atraparlas por separado.
 class DatoInvalidoError(SoftwareFJError):
     """Un dato no cumple el formato o el rango esperado (ej.: correo sin @)."""
 
@@ -37,33 +44,44 @@ class CalculoInconsistenteError(SoftwareFJError):
 
 
 # Función de apoyo: convierte un dato a número usando encadenamiento.
+# La usan las demás clases para validar tarifas, horas y cantidades.
 def convertir_a_numero(valor, campo):
     """Convierte valor a float o lanza DatoInvalidoError encadenada."""
     try:
+        # float() acepta números y textos como "3.5"; si no puede
+        # convertir, Python lanza ValueError (o TypeError si es None).
         numero = float(valor)
     except (TypeError, ValueError) as error:
-        # "from error" guarda el error original de Python como la causa.
+        # Se reemplaza el error técnico de Python por uno propio y
+        # entendible. "from error" guarda el original en __cause__.
         raise DatoInvalidoError(
             f"El campo '{campo}' debe ser numérico; se recibió {valor!r}"
         ) from error
     else:
-        # Solo llega aquí si la conversión funcionó.
+        # Solo llega aquí si la conversión funcionó sin errores.
         return numero
 
 
-# Prueba rápida: solo se ejecuta si corremos este archivo directamente.
+# Prueba rápida: solo se ejecuta si corremos este archivo directamente
+# (py excepciones.py); no se ejecuta cuando otro archivo lo importa.
 if __name__ == "__main__":
+    # Prueba 1: lanzar y atrapar una excepción propia con la clase base.
     try:
         raise DatoInvalidoError("El correo 'luisgmail.com' no tiene @")
     except SoftwareFJError as error:
+        # type(error).__name__ muestra el nombre de la clase del error.
         print("Se atrapó el error:", type(error).__name__, "-", error)
+    # El programa continúa: la excepción quedó controlada.
     print("El programa sigue funcionando.")
 
+    # Prueba 2: conversión válida, debe devolver 3.5.
     print("Conversión correcta:", convertir_a_numero("3.5", "duración"))
 
+    # Prueba 3: conversión inválida, muestra el error y su causa original.
     try:
         convertir_a_numero("dos horas", "duración")
     except DatoInvalidoError as error:
         print("Error:", error)
+        # __cause__ es el ValueError original guardado por "from error".
         print("Causa original:", type(error.__cause__).__name__,
               "-", error.__cause__)
