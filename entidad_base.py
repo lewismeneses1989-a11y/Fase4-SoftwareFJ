@@ -7,7 +7,6 @@ Todas las entidades del sistema (clientes, servicios y reservas) heredan
 de EntidadSistema. Así comparten un identificador, una fecha de creación
 y la obligación de saber describirse y validarse a sí mismas.
 """
-
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -58,3 +57,16 @@ class EntidadSistema(ABC):
 
     def __hash__(self):
         return hash((type(self).__name__, self._id))
+
+
+# Prueba rápida: comprobar que la clase abstracta no se puede instanciar.
+if __name__ == "__main__":
+    try:
+        EntidadSistema()
+    except TypeError as error:
+        print("Correcto, no se puede instanciar la clase abstracta:")
+        print("  ", error)
+        
+
+    
+    

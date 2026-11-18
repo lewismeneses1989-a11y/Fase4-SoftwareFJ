@@ -1,10 +1,10 @@
-
 """
 cliente.py
 Parte 2 - Clase Cliente del sistema Software FJ.
 Autor: Luisa Fernanda Triana Cabezas
 Cliente hereda de EntidadSistema y protege sus datos personales con
 atributos privados y propiedades que validan cada valor antes de guardarlo.
+Se crea así: Cliente("CLI-001", "Laura Martínez", "laura.martinez@correo.com")
 """
 import re
 
@@ -23,14 +23,13 @@ PATRON_CORREO = re.compile(r"^[\w.+-]+@[\w-]+(\.[\w-]+)+$")
 class Cliente(EntidadSistema):
     """Persona o empresa que solicita servicios a Software FJ."""
 
-    def __init__(self, nombre, documento, correo, telefono):
-        super().__init__()  # Genera el ID y la fecha de creación.
+    def __init__(self, id_cliente, nombre, correo):
+        super().__init__()  # Genera el ID interno y la fecha de creación.
         try:
             # Al asignar se ejecutan los setters, que validan cada dato.
+            self.id_cliente = id_cliente
             self.nombre = nombre
-            self.documento = documento
             self.correo = correo
-            self.telefono = telefono
         except SoftwareFJError as error:
             # Registramos el fallo y lo encadenamos para no perder la causa.
             registrar("ERROR", f"No se pudo crear el cliente: {error}")
@@ -50,6 +49,14 @@ class Cliente(EntidadSistema):
 
     # ---------- Propiedades con validación (encapsulación) ----------
     @property
+    def id_cliente(self):
+        return self.__id_cliente
+
+    @id_cliente.setter
+    def id_cliente(self, valor):
+        self.__id_cliente = self._texto_obligatorio(valor, "id_cliente").upper()
+
+    @property
     def nombre(self):
         return self.__nombre
 
@@ -63,19 +70,6 @@ class Cliente(EntidadSistema):
         self.__nombre = valor.title()
 
     @property
-    def documento(self):
-        return self.__documento
-
-    @documento.setter
-    def documento(self, valor):
-        valor = self._texto_obligatorio(valor, "documento")
-        if not valor.isdigit() or not 6 <= len(valor) <= 10:
-            raise DatoInvalidoError(
-                f"El documento '{valor}' debe tener entre 6 y 10 dígitos"
-            )
-        self.__documento = valor
-
-    @property
     def correo(self):
         return self.__correo
 
@@ -86,30 +80,16 @@ class Cliente(EntidadSistema):
             raise DatoInvalidoError(f"El correo '{valor}' no es válido")
         self.__correo = valor.lower()
 
-    @property
-    def telefono(self):
-        return self.__telefono
-
-    @telefono.setter
-    def telefono(self, valor):
-        valor = self._texto_obligatorio(valor, "teléfono")
-        if not valor.isdigit() or len(valor) != 10:
-            raise DatoInvalidoError(
-                f"El teléfono '{valor}' debe tener 10 dígitos"
-            )
-        self.__telefono = valor
-
     # ---------- Implementación de los métodos abstractos ----------
     def describir(self):
-        return (f"{self.__nombre} | Doc: {self.__documento} | "
-                f"Correo: {self.__correo} | Tel: {self.__telefono}")
+        return (f"{self.__id_cliente} | {self.__nombre} | "
+                f"Correo: {self.__correo}")
 
     def validar(self):
         # Vuelve a pasar cada dato por su setter; si algo cambió mal, falla.
+        self.id_cliente = self.__id_cliente
         self.nombre = self.__nombre
-        self.documento = self.__documento
         self.correo = self.__correo
-        self.telefono = self.__telefono
         return True
 
 
@@ -117,10 +97,10 @@ class Cliente(EntidadSistema):
 if __name__ == "__main__":
     clientes = []
     datos_prueba = [
-        ("luis adrada", "1061234567", "luis@gmail.com", "3001234567"),
-        ("Ana", "12345678", "anagmail.com", "3109876543"),    # sin @
-        ("", "98765432", "pedro@unad.edu.co", "3201112233"),  # sin nombre
-        ("María López", "12AB", "maria@unad.edu.co", "3157778899"),
+        ("CLI-001", "Laura Martínez", "laura.martinez@correo.com"),
+        ("CLI-002", "Ana", "anagmail.com"),            # correo sin @
+        ("CLI-003", "", "pedro@unad.edu.co"),          # sin nombre
+        ("CLI-004", "María López 2", "maria@unad.edu.co"),  # nombre con número
     ]
 
     for datos in datos_prueba:
