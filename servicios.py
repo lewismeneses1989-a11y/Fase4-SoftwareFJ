@@ -3,12 +3,17 @@ servicios.py
 Parte 3 - Clase abstracta Servicio y servicios especializados.
 Autor: Luis Alfredo Adrada Meneses
 
-Define la clase abstracta Servicio y tres servicios que heredan de ella:
-ReservaSala, AlquilerEquipo y Asesoria. Cada uno sobrescribe describir(),
-validar_parametros() y calcular_costo() (polimorfismo).
+Define la clase abstracta Servicio, que hereda de EntidadSistema (Parte 2),
+y tres servicios que heredan de ella: ReservaSala, AlquilerEquipo y
+Asesoria. Cada uno sobrescribe describir(), validar_parametros() y
+calcular_costo() (polimorfismo).
 """
-# ABC y abstractmethod permiten crear clases y métodos abstractos.
-from abc import ABC, abstractmethod
+# abstractmethod permite declarar métodos abstractos.
+from abc import abstractmethod
+
+# Clase abstracta general del sistema (Parte 2): aporta id, fecha de
+# creación y la obligación de implementar describir() y validar().
+from entidad_base import EntidadSistema
 
 # Excepciones propias (Parte 1) para cada tipo de error del servicio.
 from excepciones import (CalculoInconsistenteError, DatoInvalidoError,
@@ -18,23 +23,35 @@ from excepciones import (CalculoInconsistenteError, DatoInvalidoError,
 IVA = 0.19  # Impuesto que se suma cuando el cliente lo pide
 
 
-class Servicio(ABC):
+class Servicio(EntidadSistema):
     """Molde de todos los servicios: no se puede crear un Servicio suelto."""
 
     def __init__(self, nombre, tarifa_hora, disponible=True):
+        # super() ejecuta el constructor de EntidadSistema, que le asigna
+        # al servicio un id único y su fecha de creación.
+        super().__init__()
+        self.nombre = nombre
+        self.tarifa_hora = tarifa_hora
+        # Indica si el servicio se puede prestar en este momento.
+        self.disponible = disponible
+        # Se validan los datos apenas se crea el objeto.
+        self.validar()
+
+    # Implementación del método abstracto validar() de EntidadSistema.
+    # La heredan las tres hijas, así que se escribe una sola vez.
+    def validar(self):
+        """Revisa nombre y tarifa; lanza una excepción propia si fallan."""
         # Validación 1: el nombre es obligatorio.
-        if not nombre:
+        if not self.nombre:
             raise ParametroFaltanteError(
                 "El servicio necesita un nombre")
-        self.nombre = nombre
         # Validación 2: la tarifa debe ser un número (encadenamiento).
-        self.tarifa_hora = convertir_a_numero(tarifa_hora, "tarifa por hora")
+        self.tarifa_hora = convertir_a_numero(self.tarifa_hora,
+                                              "tarifa por hora")
         # Validación 3: la tarifa debe ser positiva.
         if self.tarifa_hora <= 0:
             raise DatoInvalidoError(
                 "La tarifa por hora debe ser mayor a 0")
-        # Indica si el servicio se puede prestar en este momento.
-        self.disponible = disponible
 
     # Métodos abstractos: cada clase hija está OBLIGADA a escribirlos.
     # Si alguna no lo hace, Python no deja crear objetos de esa clase.
@@ -181,6 +198,8 @@ if __name__ == "__main__":
 
     # 2. Se imprime la descripción de la sala
     print(sala.describir())
+    # print() usa __str__ de EntidadSistema: muestra el tipo y el id.
+    print(sala)
 
     # 3. Costo con las tres formas de llamar a calcular_costo (sobrecarga)
     print(f"2 horas: {sala.calcular_costo(2)}")
