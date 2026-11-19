@@ -67,6 +67,3 @@ if __name__ == "__main__":
         print("Correcto, no se puede instanciar la clase abstracta:")
         print("  ", error)
         
-
-    
-    
