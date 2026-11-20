@@ -23,26 +23,7 @@ from excepciones import (
 from registro_logs import registrar
 from servicios import ReservaSala, AlquilerEquipo, Asesoria
 from reservas import Reserva
-
-# Importación segura de Cliente: usa el módulo de la Parte 2 si ya está completo,
-# o una clase provisional con las mismas validaciones mientras se integra.
-try:
-    from cliente import Cliente
-except ImportError:
-    class Cliente:
-        """Clase provisional de Cliente para ejecución autónoma de la simulación."""
-
-        def __init__(self, id_cliente, nombre, correo):
-            if not id_cliente or not nombre or not correo:
-                raise ParametroFaltanteError("ID, nombre y correo del cliente son obligatorios.")
-            if "@" not in str(correo) or "." not in str(correo):
-                raise DatoInvalidoError(f"El correo '{correo}' no tiene un formato válido.")
-            self.id_cliente = id_cliente
-            self.nombre = nombre
-            self.correo = correo
-
-        def __str__(self):
-            return f"Cliente [ID: {self.id_cliente} | Nombre: {self.nombre} | Correo: {self.correo}]"
+from cliente import Cliente
 
 
 def ejecutar_simulacion():
